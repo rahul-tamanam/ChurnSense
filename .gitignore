@@ -1,0 +1,21 @@
+# Data (large files)
+data/raw/
+data/warehouse/
+data/exports/
+*.duckdb
+data/raw/kkbox/
+data/syn
+# Models
+models/
+
+# Environment
+.env
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.DS_Store
+dist/
+*.egg-info/
+.venv/
+venv/

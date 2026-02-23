@@ -1,0 +1,33 @@
+# Data
+duckdb>=0.10.0
+pandas>=2.0.0
+numpy>=1.26.0
+
+# ML
+xgboost>=2.0.0
+scikit-learn>=1.4.0
+shap>=0.44.0
+
+# Change point detection
+ruptures>=1.1.9
+
+# LLM
+anthropic>=0.25.0
+
+# Drift monitoring
+evidently>=0.4.0
+
+# API
+fastapi>=0.110.0
+uvicorn>=0.29.0
+pydantic>=2.0.0
+
+# Utils
+python-dotenv>=1.0.0
+loguru>=0.7.0
+typer>=0.12.0
+
+# Dev
+jupyter>=1.0.0
+pytest>=8.0.0
+black>=24.0.0
