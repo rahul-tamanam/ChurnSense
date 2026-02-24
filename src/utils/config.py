@@ -17,7 +17,7 @@ MODELS_DIR        = ROOT / os.getenv("MODELS_DIR",         "models")
 SQL_DIR           = ROOT / "sql"
 
 # ── API Keys ──────────────────────────────────────────────────────────────────
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROK_API_KEY", "")
 
 # ── Model config ──────────────────────────────────────────────────────────────
 CHURN_THRESHOLD   = float(os.getenv("CHURN_THRESHOLD",  "0.65"))
@@ -48,7 +48,7 @@ CHURN_FEATURES = [
     "change_point_detected", "days_since_change_point",
     "usage_slope_post_change",
     # Demographics
-    "tenure_days", "city_encoded", "age_bucket",
+    "tenure_days", "city_encoded", "age_bucket_encoded",
 ]
 
 UPLIFT_FEATURES = CHURN_FEATURES + ["intervention_type_encoded"]

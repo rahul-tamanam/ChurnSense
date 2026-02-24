@@ -37,9 +37,10 @@ SELECT
     time_to_fix_hours,
 
     -- Convenience flags used in feature engineering
-    CASE WHEN sentiment = 'negative'              THEN 1 ELSE 0 END AS is_negative,
-    CASE WHEN resolution_status = 'unresolved'    THEN 1 ELSE 0 END AS is_unresolved,
-    CASE WHEN category = 'cancellation_inquiry'   THEN 1 ELSE 0 END AS is_cancellation
+    -- Use LOWER(TRIM(...)) inline: column aliases are not in scope in the same SELECT level
+    CASE WHEN LOWER(TRIM(sentiment))         = 'negative'             THEN 1 ELSE 0 END AS is_negative,
+    CASE WHEN LOWER(TRIM(resolution_status)) = 'unresolved'           THEN 1 ELSE 0 END AS is_unresolved,
+    CASE WHEN LOWER(TRIM(category))          = 'cancellation_inquiry' THEN 1 ELSE 0 END AS is_cancellation
 
 FROM raw_support_tickets
 WHERE msno IS NOT NULL

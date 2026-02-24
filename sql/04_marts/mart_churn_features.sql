@@ -34,15 +34,17 @@ encoded AS (
     SELECT
         *,
 
-        -- Age bucket → integer ordinal
-        CASE age_bucket
+        -- Age bucket string → integer ordinal
+        -- NOTE: feat_master outputs this column as age_bucket_encoded (string label).
+        -- We compute the integer here under a temporary name to avoid a self-reference.
+        CASE age_bucket_encoded
             WHEN '10-19'  THEN 1
             WHEN '20-29'  THEN 2
             WHEN '30-39'  THEN 3
             WHEN '40-49'  THEN 4
             WHEN '50+'    THEN 5
             ELSE 0
-        END AS age_bucket_encoded,
+        END AS age_bucket_int,
 
         -- Behavioral cohort: segment users by engagement pattern
         CASE
@@ -72,7 +74,7 @@ SELECT
     msno,
     is_churn,
 
-    -- ── Final clipped features ────────────────────────────────────────────────
+    --  Final clipped features 
     usage_decay_30d_clipped         AS usage_decay_30d,
     usage_decay_60d_clipped         AS usage_decay_60d,
     usage_decay_90d_clipped         AS usage_decay_90d,
@@ -118,8 +120,8 @@ SELECT
 
     -- Encoded categoricals
     gender_male_flag,
-    city                            AS city_encoded,
-    age_bucket_encoded,
+    city_encoded,
+    age_bucket_int                          AS age_bucket_encoded,
     tenure_days,
 
     -- Cohorts and tiers (for analysis, not fed into model directly)

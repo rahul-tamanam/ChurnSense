@@ -24,7 +24,7 @@ CREATE OR REPLACE TABLE mart_intervention_results AS
 
 SELECT
     -- Identity
-    fm.msno,
+    mc.msno,
 
     -- Intervention assignment
     si.intervention_type,
@@ -48,50 +48,52 @@ SELECT
     so.was_saved,
     so.renewed,
 
-    -- ── All churn features (same as mart_churn_features) ─────────────────────
-    fm.usage_decay_30d,
-    fm.usage_decay_60d,
-    fm.usage_decay_90d,
-    fm.sessions_last_30d,
-    fm.sessions_last_60d,
-    fm.sessions_last_90d,
-    fm.avg_session_duration_30d,
+    -- ── All churn features (clipped/encoded — from mart_churn_features) ────────
+    mc.usage_decay_30d,
+    mc.usage_decay_60d,
+    mc.usage_decay_90d,
+    mc.sessions_last_30d,
+    mc.sessions_last_60d,
+    mc.sessions_last_90d,
+    mc.avg_session_duration_30d,
 
-    fm.login_days_last_30d,
-    fm.login_gap_days_avg,
-    fm.login_streak_max,
-    fm.days_since_last_login,
+    mc.login_days_last_30d,
+    mc.login_gap_days_avg,
+    mc.login_streak_max,
+    mc.days_since_last_login,
 
-    fm.ticket_count_30d,
-    fm.ticket_count_90d,
-    fm.ticket_velocity,
-    fm.pct_negative_sentiment,
-    fm.unresolved_ticket_count,
-    fm.has_cancellation_inquiry,
+    mc.ticket_count_30d,
+    mc.ticket_count_90d,
+    mc.ticket_velocity,
+    mc.pct_negative_sentiment,
+    mc.unresolved_ticket_count,
+    mc.has_cancellation_inquiry,
 
-    fm.auto_renew_flag,
-    fm.plan_downgrade_flag,
-    fm.payment_failure_count_90d,
-    fm.days_since_last_txn,
-    fm.avg_discount_rate,
+    mc.auto_renew_flag,
+    mc.plan_downgrade_flag,
+    mc.payment_failure_count_90d,
+    mc.days_since_last_txn,
+    mc.avg_discount_rate,
 
-    fm.unique_features_used_30d,
-    fm.feature_diversity_score,
-    fm.days_since_last_feature_use,
+    mc.unique_features_used_30d,
+    mc.feature_diversity_score,
+    mc.days_since_last_feature_use,
 
-    fm.change_point_detected,
-    fm.days_since_change_point,
-    fm.usage_slope_post_change,
+    mc.change_point_detected,
+    mc.days_since_change_point,
+    mc.usage_slope_post_change,
 
-    fm.gender_male_flag,
-    fm.city_encoded,
-    fm.age_bucket_encoded,
-    fm.tenure_days,
+    mc.gender_male_flag,
+    mc.city_encoded,
+    mc.age_bucket_encoded,
+    mc.tenure_days,
 
-    fm.behavioral_cohort,
-    fm.risk_tier
+    -- Cohort / tier labels (analysis only — not fed into uplift model directly)
+    mc.behavioral_cohort,
+    mc.risk_tier
 
-FROM feat_master fm
-INNER JOIN stg_interventions si ON fm.msno = si.msno
-INNER JOIN stg_outcomes      so ON fm.msno = so.msno
+FROM mart_churn_features mc
+INNER JOIN stg_interventions si ON mc.msno = si.msno
+INNER JOIN stg_outcomes      so ON mc.msno = so.msno
                                 AND si.intervention_type = so.intervention_type;
+
