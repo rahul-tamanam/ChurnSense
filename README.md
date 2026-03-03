@@ -29,8 +29,8 @@ git clone https://github.com/yourname/churn-prevention-system
 cd churn-prevention-system
 make setup
 
-# 2. Add your API key to .env
-echo "ANTHROPIC_API_KEY=your_key_here" >> .env
+# 2. Add your LLM API key to .env (optional but recommended for explanations)
+echo "GROQ_API_KEY=your_key_here" >> .env
 
 # 3. Download KKBox data
 kaggle competitions download -c kkbox-churn-prediction-challenge
@@ -39,10 +39,13 @@ unzip kkbox-churn-prediction-challenge.zip -d data/raw/kkbox
 # 4. Generate synthetic extension
 python generate_synthetic_data.py --sample_users 50000
 
-# 5. Run full pipeline
+# 5. Run full pipeline (ingest → features → models → action_plan.csv)
 make pipeline
 
-# 6. Start API
+# 6. (Optional) Run scoring-only pipeline to refresh scored_users.csv for the API
+make score
+
+# 7. Start API
 make api
 # → http://localhost:8000/docs
 ```
@@ -70,20 +73,20 @@ make api
 
 ---
 
-## Project Structure
+## Project Structure (Final)
 
 ```
-sql/              Feature engineering in pure SQL (sessionization, rolling metrics, marts)
+sql/              Feature engineering in SQL (sessionization, rolling metrics, marts)
 src/
   ingestion/      CSV → DuckDB warehouse
-  features/       SQL orchestration + PELT change point detection
+  features/       SQL orchestration + (optional) PELT change point loading
   models/         XGBoost churn classifier + T-learner uplift model
   explainability/ SHAP values + LLM narration
   interventions/  Uplift-gated action selection
-  monitoring/     Evidently drift detection
+  monitoring/     Drift detection + retraining trigger
 app/              FastAPI serving layer
-pipelines/        End-to-end orchestration scripts
-notebooks/        EDA, model development, example outputs
+pipelines/        End-to-end, scoring-only, and retraining pipelines
+notebooks/        EDA, model development, example outputs (for recruiters)
 ```
 
 ---

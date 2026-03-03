@@ -16,8 +16,9 @@ from src.utils.config import GROQ_API_KEY
 
 client = Groq(api_key=GROQ_API_KEY)
 
-MODEL        = "llama-3.3-70b-versatile"
-TOP_N_FEATURES = 5
+MODEL                 = "llama-3.3-70b-versatile"
+TOP_N_FEATURES        = 5
+MAX_USERS_FOR_NARRATION = 200  # limit batch size to avoid LLM rate limits
 
 FEATURE_LABELS = {
     "usage_decay_30d":             "30-day usage decay",
@@ -147,10 +148,16 @@ def narrate_batch(
     features_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Run narration for all high-risk users.
+    Run narration for a subset of high-risk users (top-N by churn_prob).
     Returns DataFrame with msno + explanation columns.
     """
-    high_risk   = scored_df[scored_df["churn_flag"] == 1].copy()
+    high_risk = scored_df[scored_df["churn_flag"] == 1].copy()
+    if MAX_USERS_FOR_NARRATION:
+        high_risk = (
+            high_risk.sort_values("churn_prob", ascending=False)
+            .head(MAX_USERS_FOR_NARRATION)
+        )
+
     cp_lookup   = change_points_df.set_index("msno").to_dict("index") if change_points_df is not None else {}
     feat_lookup = features_df.set_index("msno").to_dict("index") if features_df is not None else {}
 

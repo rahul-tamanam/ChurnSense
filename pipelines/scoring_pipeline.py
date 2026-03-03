@@ -5,8 +5,9 @@ Scoring Pipeline
 2. Score ALL users with churn model → churn_prob + churn_flag
 3. Compute SHAP for high-risk users only
 4. Compute uplift scores for high-risk users only
-5. Generate Grok narratives for high-risk users only
-6. Run intervention selector → action_plan.csv
+5. Save scored_users.csv  ← API reads from this
+
+Narration happens on-demand in the API, not here.
 
 Run:
     python pipelines/scoring_pipeline.py
@@ -17,36 +18,28 @@ from loguru import logger
 from src.utils.config import EXPORTS_DIR, CHURN_FEATURES, CHURN_THRESHOLD
 from src.models.model_registry import load_model, load_metadata
 from src.explainability.shap_explainer import explain
-from src.explainability.llm_narrator import narrate_batch
-from src.interventions.intervention_selector import select_interventions
 from src.models.uplift_model import compute_uplift
 
 
-# ── Loaders ───────────────────────────────────────────────────────────────────
-
-def load_features() -> tuple[pd.DataFrame, pd.DataFrame | None]:
+def load_features() -> pd.DataFrame:
     features_path = EXPORTS_DIR / "features_score.csv"
-    cp_path       = EXPORTS_DIR / "change_points.csv"
-
     if not features_path.exists():
         raise FileNotFoundError(
             f"{features_path} not found. Run the feature pipeline first: make features"
         )
-
     features_df = pd.read_csv(features_path)
+
+    # Drop rows whose msno is missing or blank — they can't be scored or looked up.
+    before = len(features_df)
+    features_df = features_df.dropna(subset=["msno"])
+    features_df = features_df[features_df["msno"].astype(str).str.strip() != ""]
+    dropped = before - len(features_df)
+    if dropped:
+        logger.warning(f"Dropped {dropped:,} rows with empty/null msno from features_score.csv")
+
     logger.info(f"Loaded {len(features_df):,} users from features_score.csv")
+    return features_df
 
-    change_points_df = None
-    if cp_path.exists():
-        change_points_df = pd.read_csv(cp_path)
-        logger.info(f"Loaded change points for {len(change_points_df):,} users")
-    else:
-        logger.info("change_points.csv not found — PELT features absent from narratives")
-
-    return features_df, change_points_df
-
-
-# ── Step 1: Score all users ───────────────────────────────────────────────────
 
 def score_all_users(features_df: pd.DataFrame) -> pd.DataFrame:
     model     = load_model("churn_classifier")
@@ -70,8 +63,6 @@ def score_all_users(features_df: pd.DataFrame) -> pd.DataFrame:
     return scored
 
 
-# ── Step 2: SHAP — high-risk only ────────────────────────────────────────────
-
 def add_shap(scored_df: pd.DataFrame, features_df: pd.DataFrame) -> pd.DataFrame:
     high_risk_msno = scored_df.loc[scored_df["churn_flag"] == 1, "msno"]
     high_risk_feat = (
@@ -86,8 +77,6 @@ def add_shap(scored_df: pd.DataFrame, features_df: pd.DataFrame) -> pd.DataFrame
     logger.info(f"SHAP computed for {len(shap_df):,} high-risk users")
     return scored_df
 
-
-# ── Step 3: Uplift — high-risk only ──────────────────────────────────────────
 
 def add_uplift(scored_df: pd.DataFrame, features_df: pd.DataFrame) -> pd.DataFrame:
     try:
@@ -112,59 +101,38 @@ def add_uplift(scored_df: pd.DataFrame, features_df: pd.DataFrame) -> pd.DataFra
             f"Persuadable (>0.05): {(uplift_df['uplift_score'] > 0.05).sum():,}"
         )
     except FileNotFoundError:
-        logger.warning("Uplift models not found — run uplift training first. Skipping.")
+        logger.warning("Uplift models not found — skipping.")
         scored_df["uplift_score"] = None
 
     return scored_df
 
-
-# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     logger.info("=" * 55)
     logger.info("SCORING PIPELINE")
     logger.info("=" * 55)
 
-    # Load
-    features_df, change_points_df = load_features()
+    features_df = load_features()
 
-    # Step 1: Score all
-    logger.info("[1/5] Scoring all users...")
+    logger.info("[1/3] Scoring all users...")
     scored_df = score_all_users(features_df)
 
-    # Step 2: SHAP on high-risk
-    logger.info("[2/5] Computing SHAP for high-risk users...")
+    logger.info("[2/3] Computing SHAP for high-risk users...")
     scored_df = add_shap(scored_df, features_df)
 
-    # Step 3: Uplift on high-risk
-    logger.info("[3/5] Computing uplift scores for high-risk users...")
+    logger.info("[3/3] Computing uplift scores for high-risk users...")
     scored_df = add_uplift(scored_df, features_df)
 
-    # Step 4: LLM narration on high-risk
-    logger.info("[4/5] Generating Grok narratives for high-risk users...")
-    narratives_df = narrate_batch(scored_df, change_points_df, features_df)
-
-    # Step 5: Intervention selection
-    logger.info("[5/5] Selecting interventions...")
-    action_plan = select_interventions(scored_df, features_df, narratives_df)
-
-    # Save outputs
     EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
     scored_path = EXPORTS_DIR / "scored_users.csv"
     scored_df.to_csv(scored_path, index=False)
-    logger.info(f"All scored users saved → {scored_path}")
 
-    plan_path = EXPORTS_DIR / "action_plan.csv"
-    action_plan.to_csv(plan_path, index=False)
-
-    actioned = int((action_plan["final_action"] != "no_action").sum())
     logger.success(
         f"Scoring complete.\n"
-        f"  Total users scored     : {len(scored_df):,}\n"
-        f"  High-risk flagged      : {int(scored_df['churn_flag'].sum()):,}\n"
-        f"  Receiving intervention : {actioned:,}\n"
-        f"  Action plan            : {plan_path}"
+        f"  Total users scored  : {len(scored_df):,}\n"
+        f"  High-risk flagged   : {int(scored_df['churn_flag'].sum()):,}\n"
+        f"  Saved               : {scored_path}\n"
+        f"  Next                : make api"
     )
 
 

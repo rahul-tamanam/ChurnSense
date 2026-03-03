@@ -39,6 +39,7 @@ def load_csv_tables(conn: duckdb.DuckDBPyConnection) -> None:
         conn.execute(f"""
             CREATE OR REPLACE TABLE {table} AS
             SELECT * FROM read_csv_auto('{path}', ignore_errors=true)
+            WHERE msno IS NOT NULL AND TRIM(CAST(msno AS VARCHAR)) != ''
         """)
         count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         logger.info(f"  Loaded {table}: {count:,} rows")
@@ -51,6 +52,7 @@ def load_csv_tables(conn: duckdb.DuckDBPyConnection) -> None:
         conn.execute(f"""
             CREATE OR REPLACE TABLE {table} AS
             SELECT * FROM read_csv_auto('{path}', ignore_errors=true)
+            WHERE msno IS NOT NULL AND TRIM(CAST(msno AS VARCHAR)) != ''
         """)
         count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         logger.info(f"  Loaded {table}: {count:,} rows")
