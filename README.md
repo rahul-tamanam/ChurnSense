@@ -14,7 +14,7 @@ Most churn projects stop at prediction. This one closes the loop:
 2. **Change point detection** — PELT algorithm finds *when* a user's behavior shifted, not just *that* it did
 3. **Churn classifier** — XGBoost with 5-fold CV, optimized for AUC-PR (class imbalance ~94/6)
 4. **Uplift model** — T-learner meta-learner separates persuadable users from non-persuadable ones
-5. **LLM explanation layer** — SHAP values + change points → plain English insight via Claude API
+5. **LLM explanation layer** — SHAP values + change points → plain English insight via Groq API
 6. **Intervention selection** — uplift-gated action plan per user (discount / re-onboarding / outreach)
 7. **Drift monitoring** — Evidently-based feature drift detection with auto-retraining trigger
 8. **FastAPI** — live endpoints for churn risk, intervention recommendation, and drift status
@@ -40,24 +40,33 @@ unzip kkbox-churn-prediction-challenge.zip -d data/raw/kkbox
 python generate_synthetic_data.py --sample_users 50000
 
 # 5. Run full pipeline (ingest → features → models → action_plan.csv)
-make pipeline
+python -m pipelines.full_pipeline
 
 # 6. (Optional) Run scoring-only pipeline to refresh scored_users.csv for the API
-make score
+python -m pipelines.scoring_pipeline
 
-# 7. Start API
-make api
-# → http://localhost:8000/docs
+# 7. Start API + dashboard
+uvicorn app.main:app --reload --port 8000
+# → http://localhost:8000/         (React dashboard)
+# → http://localhost:8000/docs     (API docs)
 ```
 
 ---
 
-## API Endpoints
+## API & Dashboard
+
+**Dashboard**
+
+- `/` — React-based dashboard showing:
+  - Top high-risk users ranked by churn probability.
+  - Segment insights by risk tier and behavioral cohort.
+  - Simple monitoring and model insight views.
+
+**API Endpoints**
 
 | Endpoint | Description |
 |---|---|
-| `GET /users/{msno}/churn-risk` | Churn probability + plain-English explanation |
-| `GET /users/{msno}/intervention` | Recommended retention action + uplift score |
+| `GET /users/churn-risk?msno=...` | Churn probability + plain-English explanation and recommended action |
 | `GET /monitoring/drift-report` | Feature drift status + retraining flag |
 
 **Example response — `/users/{msno}/churn-risk`:**
