@@ -27,7 +27,95 @@ def action_plan_dashboard() -> str:
     n_actionable = (df["final_action"] != "no_action").sum()
     top = df.sort_values("churn_prob", ascending=False).head(200)
 
-    # Build a minimal, clean HTML table
+    # ── Segment insights: join with features_score for risk_tier / behavioral_cohort ──
+    segment_html = ""
+    try:
+        features_path = EXPORTS_DIR / "features_score.csv"
+        if features_path.exists():
+            feat = pd.read_csv(
+                features_path,
+                usecols=["msno", "behavioral_cohort", "risk_tier"],
+            )
+            joined = df.merge(feat, on="msno", how="left")
+
+            # Risk tier summary
+            if "risk_tier" in joined.columns:
+                risk_summary = (
+                    joined.groupby("risk_tier")
+                    .agg(
+                        high_risk_users=("msno", "nunique"),
+                        avg_churn_prob=("churn_prob", "mean"),
+                        intervention_rate=(
+                            "final_action",
+                            lambda s: (s != "no_action").mean() * 100,
+                        ),
+                    )
+                    .reset_index()
+                    .sort_values("avg_churn_prob", ascending=False)
+                )
+                risk_summary["intervention_rate"] = risk_summary[
+                    "intervention_rate"
+                ].round(1)
+                risk_table = risk_summary.to_html(
+                    classes="table table-sm table-striped",
+                    index=False,
+                    float_format=lambda x: f"{x:0.3f}"
+                    if isinstance(x, float)
+                    else x,
+                )
+            else:
+                risk_table = ""
+
+            # Behavioral cohort summary
+            if "behavioral_cohort" in joined.columns:
+                cohort_summary = (
+                    joined.groupby("behavioral_cohort")
+                    .agg(
+                        high_risk_users=("msno", "nunique"),
+                        avg_churn_prob=("churn_prob", "mean"),
+                        intervention_rate=(
+                            "final_action",
+                            lambda s: (s != "no_action").mean() * 100,
+                        ),
+                    )
+                    .reset_index()
+                    .sort_values("avg_churn_prob", ascending=False)
+                )
+                cohort_summary["intervention_rate"] = cohort_summary[
+                    "intervention_rate"
+                ].round(1)
+                cohort_table = cohort_summary.to_html(
+                    classes="table table-sm table-striped",
+                    index=False,
+                    float_format=lambda x: f"{x:0.3f}"
+                    if isinstance(x, float)
+                    else x,
+                )
+            else:
+                cohort_table = ""
+
+            if risk_table or cohort_table:
+                segment_html = f"""
+                <div class="row g-3 mt-4">
+                    <div class="col-md-6">
+                        <div class="table-container">
+                            <h2 class="h6 mb-3">By risk tier</h2>
+                            {risk_table}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="table-container">
+                            <h2 class="h6 mb-3">By behavioral cohort</h2>
+                            {cohort_table}
+                        </div>
+                    </div>
+                </div>
+                """
+    except Exception:
+        # If anything goes wrong, we still want the main dashboard to render.
+        segment_html = ""
+
+    # Build a minimal, clean HTML table for individual users
     table_html = top.to_html(
         classes="table table-striped",
         index=False,
@@ -111,6 +199,8 @@ def action_plan_dashboard() -> str:
                 <h2 class="h5 mb-3">Top {len(top):,} high-risk users</h2>
                 {table_html}
             </div>
+
+            {segment_html}
         </div>
     </body>
     </html>
