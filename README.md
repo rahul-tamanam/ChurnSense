@@ -1,6 +1,6 @@
 # ChurnSense
 
-An end-to-end ML pipeline for detecting, explaining, and acting on subscription churn risk — built on real KKBox behavioral data with synthetic intervention layers.
+Most churn models tell you who's leaving. This one tells you who's leaving, why they're leaving, and whether it's even worth trying to stop them. An end-to-end ML pipeline for detecting, explaining, and acting on subscription churn risk — built on real KKBox behavioral data with synthetic intervention layers.
 
 ---
 
