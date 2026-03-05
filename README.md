@@ -1,4 +1,4 @@
-# Churn Prevention System
+# ChurnSense
 
 An end-to-end ML pipeline for detecting, explaining, and acting on subscription churn risk — built on real KKBox behavioral data with synthetic intervention layers.
 
