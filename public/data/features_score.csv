@@ -1,0 +1,24 @@
+msno,risk_tier,behavioral_cohort,tenure_days,sessions_last_30d,ticket_count_30d,usage_decay_30d,login_days_last_30d,pct_negative_sentiment,payment_failure_count_90d,days_since_last_login,change_point_detected,uplift_score
+DEMO-HR-001,Critical,Power user decay,420,3,4,0.62,4,0.45,2,2,1,0.082
+DEMO-HR-002,High,Support-heavy,180,5,3,0.55,8,0.38,1,1,1,0.061
+DEMO-HR-003,High,Silent churner,90,2,2,0.48,3,0.22,0,5,0,0.048
+DEMO-HR-004,High,Price sensitive,240,4,1,0.41,6,0.18,1,3,1,0.032
+DEMO-HR-005,Medium,Low engagement,365,6,0,0.38,9,0.12,0,0,0,0.021
+DEMO-HR-006,High,Feature stall,120,3,3,0.44,5,0.29,2,4,1,0.058
+DEMO-HR-007,High,Competitor trial,60,2,4,0.51,2,0.41,3,6,1,0.041
+DEMO-HR-008,High,Payment stress,300,1,5,0.58,1,0.52,4,1,1,0.055
+DEMO-LR-101,Low,Healthy habitual,800,28,0,0.08,22,0.05,0,0,0,-0.02
+DEMO-LR-102,Low,Steady casual,400,15,1,0.12,14,0.08,0,2,0,-0.01
+DEMO-LR-103,Low,New engaged,30,20,0,0.05,18,0.04,0,1,0,-0.03
+DEMO-LR-104,Low,Weekend warrior,200,10,0,0.15,9,0.06,0,3,0,-0.02
+DEMO-LR-105,Low,Family plan anchor,700,18,1,0.11,16,0.07,0,1,0,-0.01
+DEMO-LR-106,Low,Corporate stable,1000,25,0,0.06,24,0.03,0,0,0,-0.02
+DEMO-LR-107,Low,Seasonal active,150,12,0,0.14,11,0.09,0,4,0,-0.02
+DEMO-LR-108,Low,Promo hopper,220,8,2,0.19,7,0.14,1,2,0,-0.04
+DEMO-LR-109,Low,Recently renewed,45,22,0,0.04,20,0.05,0,0,0,-0.03
+DEMO-LR-110,Low,Multi-device,500,21,0,0.09,19,0.06,0,1,0,-0.01
+DEMO-LR-111,Low,Community champion,900,30,0,0.07,28,0.04,0,0,0,-0.02
+DEMO-LR-112,Low,At-risk recovered,320,11,1,0.17,10,0.11,0,2,0,-0.05
+DEMO-LR-113,Low,Light listener,600,9,0,0.10,8,0.07,0,5,0,-0.02
+DEMO-LR-114,Low,Student plan,100,14,1,0.16,12,0.10,0,3,0,-0.03
+DEMO-LR-115,Low,Longtail dormant-return,750,17,0,0.08,15,0.05,0,1,0,-0.04
